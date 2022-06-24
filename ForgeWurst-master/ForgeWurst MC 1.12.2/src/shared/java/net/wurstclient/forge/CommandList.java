@@ -15,6 +15,9 @@ public final class CommandList extends WCommandList
 	public final BindsCmd bindsCmd = register(new BindsCmd());
 	public final ClearCmd clearCmd = register(new ClearCmd());
 	public final GmCmd gmCmd = register(new GmCmd());
+	public final AddPoint addPoint = register(new AddPoint());
+	public final Damage damage = register(new Damage());
+	public final PlayerInfo info = register(new PlayerInfo());
 	public final HelpCmd helpCmd = register(new HelpCmd());
 	public final SayCmd sayCmd = register(new SayCmd());
 	public final SetCheckboxCmd setCheckboxCmd = register(new SetCheckboxCmd());

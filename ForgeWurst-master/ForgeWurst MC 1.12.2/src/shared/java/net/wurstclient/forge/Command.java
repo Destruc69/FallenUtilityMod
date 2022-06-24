@@ -8,6 +8,7 @@
 package net.wurstclient.forge;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.math.BlockPos;
 import net.wurstclient.forge.compatibility.WForgeRegistryEntry;
 import net.wurstclient.forge.utils.ChatUtils;
 
@@ -45,7 +46,11 @@ public abstract class Command extends WForgeRegistryEntry<Command>
 	{
 		return syntax;
 	}
-	
+
+	protected BlockPos getPathToPos(BlockPos up) {
+		return up;
+	}
+
 	public abstract class CmdException extends Exception
 	{
 		public CmdException()

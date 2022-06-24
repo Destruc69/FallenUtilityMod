@@ -10,7 +10,12 @@ package net.wurstclient.forge;
 import java.util.ArrayList;
 import java.util.Comparator;
 
+import net.minecraft.init.Items;
+import net.minecraft.item.ItemStack;
 import net.wurstclient.forge.hacks.ClickGuiHack;
+import net.wurstclient.forge.utils.JsonUtils;
+import net.wurstclient.forge.utils.PlayerControllerUtils;
+import net.wurstclient.forge.utils.PlayerUtils;
 import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.Minecraft;
@@ -41,8 +46,9 @@ public final class IngameHUD {
 		if (event.getType() != ElementType.ALL || mc.gameSettings.showDebugInfo)
 			return;
 
-		boolean blend = GL11.glGetBoolean(GL11.GL_BLEND);
 
+
+		boolean blend = GL11.glGetBoolean(GL11.GL_BLEND);
 
 		// color
 		clickGui.updateColors();
@@ -61,6 +67,7 @@ public final class IngameHUD {
 
 			clickGui.updateColors();
 		}
+
 
 
 		if (!ForgeWurst.getForgeWurst().getHax().clickGuiHack.nogui().isChecked()) {

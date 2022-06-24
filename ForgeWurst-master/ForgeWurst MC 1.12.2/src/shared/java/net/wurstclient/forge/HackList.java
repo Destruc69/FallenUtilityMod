@@ -20,19 +20,27 @@ import java.util.Map.Entry;
 
 public final class HackList extends WHackList
 {
-
 	public final RadarHack radarHack = register(new RadarHack());
 	public final NoFall noFall = register(new NoFall());
 	public final Speed speed = register(new Speed());
 	public final Step step = register(new Step());
+	public final Hitboxes hitboxes = register(new Hitboxes());
+	public final Discord discord = register(new Discord());
 	public final NoKnockBack noKnockBack = register(new NoKnockBack());
 	public final Anchor anchor = register(new Anchor());
 	public final Criticals criticals = register(new Criticals());
 	public final AutoCrystal autoCrystal = register(new AutoCrystal());
 	public final Nuker nuker = register(new Nuker());
+	public final Test test = register(new Test());
+	public final AntiBot antiBot = register(new AntiBot());
+	public final Pointer pointer = register(new Pointer());
+	public final PositionESP positionESP = register(new PositionESP());
+	public final WallESP wallESP = register(new WallESP());
+	public final HighwayBuilder highwayBuilder = register(new HighwayBuilder());
 	public final AntiBlockLag antiBlockLag = register(new AntiBlockLag());
 	public final AntiHunger antiHunger = register(new AntiHunger());
 	public final Jesus jesus = register(new Jesus());
+	public final HighwayNav highwayNav = register(new HighwayNav());
 	public final Console console = register(new Console());
 	public final AntiFog antiFog = register(new AntiFog());
 	public final AntiWeather antiWeather = register(new AntiWeather());
@@ -43,6 +51,8 @@ public final class HackList extends WHackList
 	public final FreeCam freeCam = register(new FreeCam());
 	public final Flight flight = register(new Flight());
 	public final AimBot aimBot = register(new AimBot());
+	public final ChunkViewer chunkViewer = register(new ChunkViewer());
+	public final CPvPViewer cPvPViewer = register(new CPvPViewer());
 	public final Killaura killaura = register(new Killaura());
 	public final Scaffold scaffold = register(new Scaffold());
 	public final Timerr timerr = register(new Timerr());
@@ -58,6 +68,9 @@ public final class HackList extends WHackList
 	public final PacketFly packetFly = register(new PacketFly());
 	public final ElytraFlight elytraFlight = register(new ElytraFlight());
 	public final AntiAFK antiAFK = register(new AntiAFK());
+	public final Animations animations = register(new Animations());
+	public final TPBypass tpBypass = register(new TPBypass());
+	public final Disabler disabler = register(new Disabler());
 	public final AutoSneak autoSneak = register(new AutoSneak());
 	public final AutoWalk autoWalk = register(new AutoWalk());
 	public final NoSlowDown noSlowDown = register(new NoSlowDown());

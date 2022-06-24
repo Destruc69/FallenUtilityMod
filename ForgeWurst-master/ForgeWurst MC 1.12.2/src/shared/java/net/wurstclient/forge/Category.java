@@ -13,7 +13,8 @@ public enum Category
 	MOVEMENT("Movement"),
 	WORLD("World"),
 	PLAYER("Player"),
-	RENDER("Render");
+	RENDER("Render"),
+	PATHING("Pathing");
 
 
 	private final String name;
