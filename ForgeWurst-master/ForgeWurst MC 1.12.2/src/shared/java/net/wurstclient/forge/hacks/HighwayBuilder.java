@@ -66,6 +66,12 @@ public final class HighwayBuilder extends Hack {
 	}
 
 	@Override
+	public String getRenderName()
+	{
+		return getName() + " [" + width.getValueString() + "]";
+	}
+
+	@Override
 	protected void onEnable() {
 		MinecraftForge.EVENT_BUS.register(this);
 

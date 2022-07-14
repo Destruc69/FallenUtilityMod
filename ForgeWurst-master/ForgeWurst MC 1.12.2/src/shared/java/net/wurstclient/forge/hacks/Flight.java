@@ -8,58 +8,50 @@
 package net.wurstclient.forge.hacks;
 
 import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
-import net.minecraft.network.play.client.CPacketInput;
 import net.minecraft.network.play.client.CPacketPlayer;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3i;
-import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.wurstclient.fmlevents.WPacketInputEvent;
-import net.wurstclient.fmlevents.WPacketOutputEvent;
 import net.wurstclient.fmlevents.WUpdateEvent;
 import net.wurstclient.forge.Category;
 import net.wurstclient.forge.Hack;
 import net.wurstclient.forge.settings.EnumSetting;
-import net.wurstclient.forge.utils.BlockUtils;
-import net.wurstclient.forge.utils.MathUtils;
-import net.wurstclient.forge.utils.RenderUtils;
 import net.wurstclient.forge.utils.TimerUtils;
-import org.lwjgl.opengl.GL11;
-
-import java.util.ArrayList;
 
 public final class Flight extends Hack {
 
 	private final EnumSetting<Mode> mode =
-			new EnumSetting<>("Mode", Mode.values(), Mode.NCP);
+			new EnumSetting<>("Mode", Mode.values(), Mode.NORMAL);
+
+	public boolean shouldBlinkFly;
+	public static double aimY;
+
+	public static double starthealth;
 
 	private enum Mode {
 		NORMAL("Normal", true, false, false, false, false, false),
-		NCP("NCP", false, true, false, false, false, false),
-		JUMP("Jump", false, false, true, false, false, false),
-		STATIC("Static", false, false, false, true, false, false),
-		D3("3D", false, false, false, false, true, false),
-		SPOOF("Spoof", false, false, false, false, false, true);
+		JUMP("Jump", false, true, false, false, false, false),
+		SPOOF("SpoofGround", false, false, true, false, false, false),
+		NCPJump("NCPJump", false, false, false, true, false, false),
+		BLINKFly("BlinkFly", false, false, false, false, true, false),
+		BOPFly("BopFly", false, false, false, false, false, true);
 
 		private final String name;
 		private final boolean normal;
-		private final boolean ncp;
 		private final boolean jump;
-		private final boolean staticc;
-		private final boolean d3;
 		private final boolean spoof;
+		private final boolean ncpjump;
+		private final boolean blinkfly;
+		private final boolean bopfly;
 
-		private Mode(String name, boolean normal, boolean ncp, boolean jump, boolean staticc, boolean d3, boolean spoof) {
+		private Mode(String name, boolean normal, boolean jump, boolean spoof, boolean ncpjump, boolean blinkfly, boolean bopfly) {
 			this.name = name;
 			this.normal = normal;
-			this.ncp = ncp;
 			this.jump = jump;
-			this.staticc = staticc;
-			this.d3 = d3;
 			this.spoof = spoof;
+			this.ncpjump = ncpjump;
+			this.blinkfly = blinkfly;
+			this.bopfly = bopfly;
 		}
 
 		public String toString() {
@@ -67,9 +59,11 @@ public final class Flight extends Hack {
 		}
 	}
 
-	ArrayList<AxisAlignedBB> bbs = new ArrayList<>();
-
-	public static int aimY;
+	@Override
+	public String getRenderName()
+	{
+		return getName() + " [" + mode.getSelected().name() + "]";
+	}
 
 	public Flight() {
 		super("Flight", "I believe i can fly.");
@@ -80,7 +74,13 @@ public final class Flight extends Hack {
 	@Override
 	protected void onEnable() {
 		MinecraftForge.EVENT_BUS.register(this);
-		aimY = (int) mc.player.posY;
+		TimerUtils.reset();
+		starthealth = mc.player.getHealth();
+		try {
+			aimY = mc.player.posY;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -90,21 +90,83 @@ public final class Flight extends Hack {
 
 	@SubscribeEvent
 	public void onUpdate(WUpdateEvent event) {
-		if (mode.getSelected().d3) {
-			BlockPos pos = new BlockPos(mc.objectMouseOver.getBlockPos());
-			bbs.add(BlockUtils.getBoundingBox(pos));
-			if (TimerUtils.hasReached(10)) {
-				mc.player.setPosition(pos.getX(), pos.getY(), pos.getZ());
-			} else {
-				TimerUtils.reset();
-				mc.player.motionX = 0;
-				mc.player.motionY = 0;
-				mc.player.motionZ = 0;
-				mc.player.setVelocity(0, 0, 0);
+		try {
+			if (mode.getSelected().normal) {
+				normalFly();
 			}
+			if (mode.getSelected().jump) {
+				jumpFly();
+			}
+			if (mode.getSelected().spoof) {
+				spoofFly();
+			}
+			if (mode.getSelected().ncpjump) {
+				ncpJump();
+			}
+			if (mode.getSelected().blinkfly) {
+				blinkFly();
+			}
+			if (mode.getSelected().bopfly) {
+				bopFly();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		if (mode.getSelected().normal) {
-			EntityPlayerSP player = event.getPlayer();
+	}
+
+	public void bopFly() {
+		mc.player.onGround = true;
+		mc.player.isAirBorne = false;
+		mc.player.fallDistance = 0;
+		mc.player.motionX = 0;
+		mc.player.motionY = 0;
+		mc.player.motionZ = 0;
+		if (mc.player.ticksExisted % 2 == 0) {
+			mc.player.setPosition(mc.player.posX, mc.player.posY + 0.15, mc.player.posZ);
+		} else {
+			mc.player.setPosition(mc.player.posX, mc.player.posY - 0.15, mc.player.posZ);
+		}
+		mc.player.jumpMovementFactor = 0.5F;
+	}
+
+	public void ncpJump() {
+		try {
+			mc.player.onGround = true;
+			mc.player.fallDistance = 0;
+			mc.player.isAirBorne = false;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void normalFly() {
+		EntityPlayerSP player = mc.player;
+
+		player.capabilities.isFlying = false;
+		player.motionX = 0;
+		player.motionY = 0;
+		player.motionZ = 0;
+		player.jumpMovementFactor = 1;
+
+		if (mc.gameSettings.keyBindJump.isKeyDown())
+			player.motionY += 1;
+		if (mc.gameSettings.keyBindSneak.isKeyDown())
+			player.motionY -= 1;
+	}
+
+	public void jumpFly() {
+		try {
+			if (mc.player.posY < aimY) {
+				mc.player.jump();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void spoofFly() {
+		try {
+			EntityPlayerSP player = mc.player;
 
 			player.capabilities.isFlying = false;
 			player.motionX = 0;
@@ -112,158 +174,67 @@ public final class Flight extends Hack {
 			player.motionZ = 0;
 			player.jumpMovementFactor = 1;
 
-			bbs.add(BlockUtils.getBoundingBox(new BlockPos(mc.player.posX, mc.player.posY - 1, mc.player.posZ)));
-
-			if (mc.gameSettings.keyBindJump.isKeyDown()) {
+			if (mc.gameSettings.keyBindJump.isKeyDown())
 				player.motionY += 1;
-			}
-
-			if (mc.gameSettings.keyBindSneak.isKeyDown()) {
+			if (mc.gameSettings.keyBindSneak.isKeyDown())
 				player.motionY -= 1;
-			}
+
+			mc.player.setPosition(mc.player.posX, aimY + 0.5, mc.player.posZ);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
+	}
 
-		if (mode.getSelected().staticc) {
-			if (TimerUtils.hasReached(50)) {
-				EntityPlayerSP player = event.getPlayer();
-
-				player.capabilities.isFlying = false;
-				player.motionX = 0;
-				player.motionY = 0;
-				player.motionZ = 0;
-				player.jumpMovementFactor = 10;
-				bbs.add(BlockUtils.getBoundingBox(new BlockPos(mc.player.posX, mc.player.posY + 2, mc.player.posZ)));
-
-				bbs.add(BlockUtils.getBoundingBox(new BlockPos(mc.player.posX, mc.player.posY - 1, mc.player.posZ)));
-
-				if (mc.gameSettings.keyBindJump.isKeyDown()) {
-					player.motionY += 10;
-				}
-
-				if (mc.gameSettings.keyBindSneak.isKeyDown()) {
-					player.motionY -= 10;
-				}
-			} else {
-				bbs.add(BlockUtils.getBoundingBox(new BlockPos(mc.player.posX, mc.player.posY - 1, mc.player.posZ)));
-				TimerUtils.reset();
-				mc.player.motionX = 0;
-				mc.player.motionY = 0;
-				mc.player.motionZ = 0;
-				mc.player.setVelocity(0, 0, 0);
-			}
-		}
-
-		if (TimerUtils.hasReached(1)) {
-			bbs.clear();
-			TimerUtils.reset();
-		}
-
-		if (mode.getSelected().ncp) {
-			EntityPlayerSP player = event.getPlayer();
+	public void blinkFly() {
+		try {
+			if (!shouldBlinkFly)
+				return;
+			EntityPlayerSP player = mc.player;
 
 			player.capabilities.isFlying = false;
 			player.motionX = 0;
 			player.motionY = 0;
 			player.motionZ = 0;
-			player.jumpMovementFactor = (float) (Math.random() * 1);
+			player.jumpMovementFactor = 1;
 
-			if (mc.gameSettings.keyBindJump.isKeyDown()) {
-				player.motionY += Math.random() * 1;
-			}
+			if (mc.gameSettings.keyBindJump.isKeyDown())
+				player.motionY += 1;
+			if (mc.gameSettings.keyBindSneak.isKeyDown())
+				player.motionY -= 1;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
-			if (mc.gameSettings.keyBindSneak.isKeyDown()) {
-				player.motionY -= Math.random() * 1;
-			}
-
-			if (mc.player.posY + 2 > aimY + 2) {
-				mc.player.setPosition(mc.player.posX, aimY, mc.player.posZ);
-			}
-
-			mc.player.connection.sendPacket(new CPacketInput(mc.player.moveStrafing, mc.player.moveForward, true, true));
-			mc.player.connection.sendPacket(new CPacketInput(mc.player.moveStrafing, mc.player.moveForward, true, true));
-
-			mc.player.connection.sendPacket(new CPacketPlayer.PositionRotation(mc.player.posX, mc.player.posY - Math.random() * 0.5, mc.player.posZ, mc.player.rotationYaw, mc.player.rotationPitch, mc.player.onGround));
-
-			int radius = 2;
-			for (int x = (int) -radius; x <= radius; x++) {
-				for (int z = (int) -radius; z <= radius; z++) {
-					bbs.add(BlockUtils.getBoundingBox(new BlockPos(mc.player.posX + x, aimY + 2, mc.player.posZ + z).subtract(new Vec3i(0, 0.5, 1))));
+	@SubscribeEvent
+	public void onComingPacket(WPacketInputEvent event) {
+		try {
+			if (mode.getSelected().spoof) {
+				if (event.getPacket() instanceof CPacketPlayer.Rotation) {
+					event.setCanceled(true);
+					mc.player.connection.sendPacket(new CPacketPlayer.Rotation(mc.player.rotationYaw, mc.player.rotationPitch, true));
+				}
+				if (event.getPacket() instanceof CPacketPlayer.Position) {
+					event.setCanceled(true);
+					mc.player.connection.sendPacket(new CPacketPlayer.Position(mc.player.posX, mc.player.posY, mc.player.posZ, true));
+				}
+				if (event.getPacket() instanceof CPacketPlayer.PositionRotation) {
+					event.setCanceled(true);
+					mc.player.connection.sendPacket(new CPacketPlayer.PositionRotation(mc.player.posX, mc.player.posY, mc.player.posZ, mc.player.rotationYaw, mc.player.rotationPitch, true));
 				}
 			}
-		}
-		if (mode.getSelected().jump) {
-			if (mc.player.posY < aimY) {
-				mc.player.jump();
+			if (mode.getSelected().blinkfly) {
+				if (mc.player.fallDistance > 0.75) {
+					shouldBlinkFly = true;
+					if (event.getPacket() instanceof CPacketPlayer && mc.player.ticksExisted % 2 == 0) {
+						event.setCanceled(true);
+					}
+				} else {
+					shouldBlinkFly = false;
+				}
 			}
-
-			bbs.add(BlockUtils.getBoundingBox(new BlockPos(mc.player.posX, aimY - 1, mc.player.posZ)));
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		if (mode.getSelected().spoof) {
-			double x = mc.player.posX + mc.player.motionX;
-			double z = mc.player.posZ + mc.player.motionZ;
-
-			if (mc.player.moveForward != 0 || mc.player.moveStrafing != 0) {
-				mc.player.setPosition(x, aimY, z);
-			}
-
-			mc.player.setPosition(mc.player.posX, aimY, mc.player.posZ);
-			mc.player.motionY = 0;
-			mc.player.setVelocity(mc.player.motionX, 0, mc.player.motionZ);
-
-			bbs.add(BlockUtils.getBoundingBox(new BlockPos(mc.player.posX, aimY - 1, mc.player.posZ)));
-			bbs.add(BlockUtils.getBoundingBox(new BlockPos(mc.player.posX, aimY + 2, mc.player.posZ)));
-		}
-	}
-
-	@SubscribeEvent
-	public void onPacket(WPacketInputEvent event) {
-		double x = mc.player.posX + mc.player.motionX;
-		double z = mc.player.posZ + mc.player.motionZ;
-		if (mode.getSelected().spoof) {
-			if (event.getPacket() instanceof CPacketPlayer.Position) {
-				event.setCanceled(true);
-				mc.player.connection.sendPacket(new CPacketPlayer.Position(x, aimY, z, mc.player.onGround));
-			}
-			if (event.getPacket() instanceof CPacketPlayer.Rotation) {
-				event.setCanceled(true);
-				mc.player.connection.sendPacket(new CPacketPlayer.Rotation(mc.player.rotationYaw, mc.player.rotationPitch, mc.player.onGround));
-			}
-			if (event.getPacket() instanceof CPacketPlayer.PositionRotation) {
-				event.setCanceled(true);
-				mc.player.connection.sendPacket(new CPacketPlayer.PositionRotation(x, aimY, z, mc.player.rotationYaw, mc.player.rotationPitch, mc.player.onGround));
-			}
-		}
-	}
-	@SubscribeEvent
-	public void onRenderWorldLast(RenderWorldLastEvent event) {
-		// GL settings
-		GL11.glEnable(GL11.GL_BLEND);
-		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-		GL11.glEnable(GL11.GL_LINE_SMOOTH);
-		GL11.glLineWidth(1);
-		GL11.glDisable(GL11.GL_TEXTURE_2D);
-		GL11.glEnable(GL11.GL_CULL_FACE);
-		GL11.glDisable(GL11.GL_DEPTH_TEST);
-
-		GL11.glPushMatrix();
-		GL11.glTranslated(-TileEntityRendererDispatcher.staticPlayerX,
-				-TileEntityRendererDispatcher.staticPlayerY,
-				-TileEntityRendererDispatcher.staticPlayerZ);
-
-		for (AxisAlignedBB alignedBB : bbs) {
-			GL11.glColor4f(0, 1, 0, 0.5F);
-			GL11.glBegin(GL11.GL_QUADS);
-			RenderUtils.drawSolidBox(alignedBB);
-			GL11.glEnd();
-		}
-
-		GL11.glPopMatrix();
-
-		// GL resets
-		GL11.glColor4f(1, 1, 1, 1);
-		GL11.glEnable(GL11.GL_DEPTH_TEST);
-		GL11.glEnable(GL11.GL_TEXTURE_2D);
-		GL11.glDisable(GL11.GL_BLEND);
-		GL11.glDisable(GL11.GL_LINE_SMOOTH);
 	}
 }

@@ -14,6 +14,9 @@ import net.wurstclient.forge.Category;
 import net.wurstclient.forge.Hack;
 
 public final class Animations extends Hack {
+
+	public static double time;
+
 	public Animations() {
 		super("Animations", "Animations for using sword");
 		setCategory(Category.PLAYER);
@@ -32,7 +35,8 @@ public final class Animations extends Hack {
 	@SubscribeEvent
 	public void onUpdate(WUpdateEvent event) {
 		if (mc.player.isSwingInProgress) {
-			mc.player.swingProgress = 1;
+			mc.player.swingProgressInt = 50;
+			mc.player.swingProgress = 50;
 		}
 	}
 }

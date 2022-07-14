@@ -8,147 +8,193 @@
 package net.wurstclient.forge.hacks;
 
 import net.minecraft.client.entity.EntityOtherPlayerMP;
+import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.settings.GameSettings;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.MoverType;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.SoundEvents;
+import net.minecraft.network.play.client.CPacketPlayer;
 import net.minecraft.network.play.client.CPacketUseEntity;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.wurstclient.fmlevents.WPacketInputEvent;
-import net.wurstclient.fmlevents.WPlayerMoveEvent;
-import net.wurstclient.fmlevents.WUpdateEvent;
+import net.wurstclient.fmlevents.*;
 import net.wurstclient.forge.Category;
 import net.wurstclient.forge.Hack;
+import net.wurstclient.forge.settings.CheckboxSetting;
 import net.wurstclient.forge.settings.SliderSetting;
 import net.wurstclient.forge.utils.EntityFakePlayer;
+import net.wurstclient.forge.utils.KeyBindingUtils;
 
-public final class FreeCam extends Hack
-{
+public final class FreeCam extends Hack {
 	public static EntityOtherPlayerMP camera;
+
+	private final CheckboxSetting old =
+			new CheckboxSetting("OldFreeCam",
+					true);
 
 	private final SliderSetting speed =
 			new SliderSetting("Speed", 1, 0.05, 10, 0.05, SliderSetting.ValueDisplay.DECIMAL);
 
-	public FreeCam()
-	{
+	private EntityFakePlayer fakePlayer;
+
+	public FreeCam() {
 		super("FreeCam", "Go outside of your body.");
 		setCategory(Category.RENDER);
+		addSetting(old);
+	}
+
+	@Override
+	public String getRenderName()
+	{
+		return getName() + " [" + speed.getValueString() + "]";
 	}
 
 	@Override
 	public void onEnable() {
-		if (mc.player == null || mc.world == null)
-			return;
-
 		MinecraftForge.EVENT_BUS.register(this);
-		mc.renderChunksMany = false;
+		if (!old.isChecked()) {
+			if (mc.player == null || mc.world == null)
+				return;
 
-		camera = new EntityOtherPlayerMP(mc.world, mc.getSession().getProfile());
-		camera.copyLocationAndAnglesFrom(mc.player);
-		camera.prevRotationYaw = mc.player.rotationYaw;
-		camera.rotationYawHead = mc.player.rotationYawHead;
-		camera.inventory.copyInventory(mc.player.inventory);
-		mc.world.addEntityToWorld(-100, camera);
-		mc.setRenderViewEntity(camera);
+
+			mc.renderChunksMany = false;
+
+			camera = new EntityOtherPlayerMP(mc.world, mc.getSession().getProfile());
+			camera.copyLocationAndAnglesFrom(mc.player);
+			camera.prevRotationYaw = mc.player.rotationYaw;
+			camera.rotationYawHead = mc.player.rotationYawHead;
+			camera.inventory.copyInventory(mc.player.inventory);
+			mc.world.addEntityToWorld(-100, camera);
+			mc.setRenderViewEntity(camera);
+		} else {
+			fakePlayer = new EntityFakePlayer();
+
+			GameSettings gs = mc.gameSettings;
+			KeyBinding[] bindings = {gs.keyBindForward, gs.keyBindBack,
+					gs.keyBindLeft, gs.keyBindRight, gs.keyBindJump, gs.keyBindSneak};
+			for(KeyBinding binding : bindings)
+				KeyBindingUtils.resetPressed(binding);
+		}
 	}
 
 	@Override
 	public void onDisable() {
 		MinecraftForge.EVENT_BUS.unregister(this);
-		mc.renderChunksMany = true;
+		if (!old.isChecked()) {
+			mc.renderChunksMany = true;
 
-		if (mc.player != null && mc.world != null && mc.getRenderViewEntity() != null) {
-			mc.player.moveStrafing = 0;
-			mc.player.moveForward = 0;
-			mc.world.removeEntity(camera);
-			mc.setRenderViewEntity(mc.player);
+			if (mc.player != null && mc.world != null && mc.getRenderViewEntity() != null) {
+				mc.player.moveStrafing = 0;
+				mc.player.moveForward = 0;
+				mc.world.removeEntity(camera);
+				mc.setRenderViewEntity(mc.player);
+			}
+		} else {
+			fakePlayer.resetPlayerPosition();
+			fakePlayer.despawn();
+
+			mc.renderGlobal.loadRenderers();
 		}
 	}
 
 	@SubscribeEvent
 	public void onUpdate(LivingEvent.LivingUpdateEvent e) {
-		if (!e.getEntity().equals(camera) || mc.currentScreen != null) {
-			return;
-		}
-
-		if (camera == null)
-			return;
-
-		//Update motion
-		if (mc.gameSettings.keyBindJump.isKeyDown()) {
-			camera.motionY = speed.getValueF();
-		} else if (mc.gameSettings.keyBindSneak.isKeyDown()) {
-			camera.motionY = -speed.getValueF();
-		} else {
-			camera.motionY = 0;
-		}
-
-		if (mc.gameSettings.keyBindForward.isKeyDown()) {
-			camera.moveForward = 1;
-		} else if (mc.gameSettings.keyBindBack.isKeyDown()) {
-			camera.moveForward = -1;
-		} else {
-			camera.moveForward = 0;
-		}
-
-		if (mc.gameSettings.keyBindLeft.isKeyDown()) {
-			camera.moveStrafing = -1;
-		} else if (mc.gameSettings.keyBindRight.isKeyDown()) {
-			camera.moveStrafing = 1;
-		} else {
-			camera.moveStrafing = 0;
-		}
-
-		if (camera.moveStrafing != 0 || camera.moveForward != 0) {
-			double yawRad = Math.toRadians(camera.rotationYaw - getRotationFromVec(new Vec3d(camera.moveStrafing, 0.0, camera.moveForward))[0]);
-
-			camera.motionX = -Math.sin(yawRad) * speed.getValueF();
-			camera.motionZ = Math.cos(yawRad) * speed.getValueF();
-
-			if (mc.gameSettings.keyBindSprint.isKeyDown()) {
-				camera.setSprinting(true);
-				camera.motionX *= 1.5;
-				camera.motionZ *= 1.5;
-			} else {
-				camera.setSprinting(false);
+		if (!old.isChecked()) {
+			if (!e.getEntity().equals(camera) || mc.currentScreen != null) {
+				return;
 			}
-		} else {
-			camera.motionX = 0;
-			camera.motionZ = 0;
+
+			if (camera == null)
+				return;
+
+			//Update motion
+			if (mc.gameSettings.keyBindJump.isKeyDown()) {
+				camera.motionY = speed.getValueF();
+			} else if (mc.gameSettings.keyBindSneak.isKeyDown()) {
+				camera.motionY = -speed.getValueF();
+			} else {
+				camera.motionY = 0;
+			}
+
+			if (mc.gameSettings.keyBindForward.isKeyDown()) {
+				camera.moveForward = 1;
+			} else if (mc.gameSettings.keyBindBack.isKeyDown()) {
+				camera.moveForward = -1;
+			} else {
+				camera.moveForward = 0;
+			}
+
+			if (mc.gameSettings.keyBindLeft.isKeyDown()) {
+				camera.moveStrafing = -1;
+			} else if (mc.gameSettings.keyBindRight.isKeyDown()) {
+				camera.moveStrafing = 1;
+			} else {
+				camera.moveStrafing = 0;
+			}
+
+			if (camera.moveStrafing != 0 || camera.moveForward != 0) {
+				double yawRad = Math.toRadians(camera.rotationYaw - getRotationFromVec(new Vec3d(camera.moveStrafing, 0.0, camera.moveForward))[0]);
+
+				camera.motionX = -Math.sin(yawRad) * speed.getValueF();
+				camera.motionZ = Math.cos(yawRad) * speed.getValueF();
+
+				if (mc.gameSettings.keyBindSprint.isKeyDown()) {
+					camera.setSprinting(true);
+					camera.motionX *= 1.5;
+					camera.motionZ *= 1.5;
+				} else {
+					camera.setSprinting(false);
+				}
+			} else {
+				camera.motionX = 0;
+				camera.motionZ = 0;
+			}
+
+			camera.inventory.copyInventory(mc.player.inventory);
+			camera.noClip = true;
+			camera.rotationYaw = mc.player.rotationYaw;
+			camera.rotationPitch = mc.player.rotationPitch;
+
+			camera.move(MoverType.SELF, camera.motionX, camera.motionY, camera.motionZ);
 		}
+	}
 
-		camera.inventory.copyInventory(mc.player.inventory);
-		camera.noClip = true;
-		camera.rotationYaw = mc.player.rotationYaw;
-		camera.rotationPitch = mc.player.rotationPitch;
+	@SubscribeEvent
+	public void onUpdate(WUpdateEvent event) {
+		if (old.isChecked()) {
+			EntityPlayerSP player = event.getPlayer();
 
-		camera.move(MoverType.SELF, camera.motionX, camera.motionY, camera.motionZ);
+			player.motionX = 0;
+			player.motionY = 0;
+			player.motionZ = 0;
+
+			player.onGround = false;
+			player.jumpMovementFactor = speed.getValueF();
+
+			if (mc.gameSettings.keyBindJump.isKeyDown())
+				player.motionY += speed.getValue();
+
+			if (mc.gameSettings.keyBindSneak.isKeyDown())
+				player.motionY -= speed.getValue();
+		}
 	}
 
 	@SubscribeEvent
 	private void packet(WPacketInputEvent event) {
-		try {
-			if (event.getPacket() instanceof CPacketUseEntity) {
-				CPacketUseEntity packet = (CPacketUseEntity) event.getPacket();
+		if (!old.isChecked()) {
+			try {
+				if (event.getPacket() instanceof CPacketUseEntity) {
+					CPacketUseEntity packet = (CPacketUseEntity) event.getPacket();
 
-				if (packet.getEntityFromWorld(mc.world).equals(mc.player)) {
-					event.setCanceled(true);
+					if (packet.getEntityFromWorld(mc.world).equals(mc.player)) {
+						event.setCanceled(true);
+					}
 				}
+			} catch (NullPointerException e) {
 			}
-		} catch (NullPointerException e) {
 		}
-	}
-
-	@SubscribeEvent
-	private void move(WPlayerMoveEvent event) {
-		mc.player.movementInput.moveForward = 0;
-		mc.player.movementInput.moveStrafe = 0;
-		mc.player.movementInput.jump = false;
-		mc.player.movementInput.sneak = false;
-		mc.player.setSprinting(false);
-
-		event.setCanceled(true);
 	}
 
 	public static double[] getRotationFromVec(Vec3d vec) {
@@ -171,6 +217,33 @@ public final class FreeCam extends Hack
 
 		return angle;
 	}
+
+	@SubscribeEvent
+	public void onPlayerMove(WPlayerMoveEvent event) {
+		if (old.isChecked()) {
+			event.getPlayer().noClip = true;
+		}
+	}
+
+	@SubscribeEvent
+	public void onIsNormalCube(WIsNormalCubeEvent event) {
+		if (old.isChecked()) {
+			event.setCanceled(true);
+		}
+	}
+
+	@SubscribeEvent
+	public void onSetOpaqueCube(WSetOpaqueCubeEvent event) {
+		if (old.isChecked()) {
+			event.setCanceled(true);
+		}
+	}
+
+	@SubscribeEvent
+	public void onPacketOutput(WPacketOutputEvent event) {
+		if (old.isChecked()) {
+			if (event.getPacket() instanceof CPacketPlayer)
+				event.setCanceled(true);
+		}
+	}
 }
-
-

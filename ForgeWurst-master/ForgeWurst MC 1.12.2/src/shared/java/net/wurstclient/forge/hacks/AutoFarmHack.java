@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import net.minecraft.init.SoundEvents;
 import org.lwjgl.opengl.GL11;
 
 import net.minecraft.block.*;
@@ -69,6 +70,12 @@ public final class AutoFarmHack extends Hack
 			+ "pumpkins, melons, cacti, sugar canes and\n" + "nether warts.");
 		setCategory(Category.WORLD);
 		addSetting(range);
+	}
+
+	@Override
+	public String getRenderName()
+	{
+		return getName() + " [" + range.getValueString() + "]";
 	}
 	
 	@Override

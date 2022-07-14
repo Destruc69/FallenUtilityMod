@@ -8,6 +8,7 @@
 package net.wurstclient.forge.hacks;
 
 import net.minecraft.entity.Entity;
+import net.minecraft.init.SoundEvents;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;

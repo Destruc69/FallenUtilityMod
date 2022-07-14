@@ -10,6 +10,7 @@ package net.wurstclient.forge.hacks;
 import net.minecraft.client.renderer.debug.DebugRendererCollisionBox;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.SoundEvents;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.wurstclient.fmlevents.WUpdateEvent;

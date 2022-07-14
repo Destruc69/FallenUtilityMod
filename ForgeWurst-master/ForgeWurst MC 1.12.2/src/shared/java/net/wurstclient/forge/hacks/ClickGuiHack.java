@@ -9,6 +9,7 @@
 package net.wurstclient.forge.hacks;
 
 import net.minecraft.client.gui.GuiButton;
+import net.minecraft.init.SoundEvents;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.wurstclient.fmlevents.WGuiInventoryButtonEvent;
@@ -17,6 +18,7 @@ import net.wurstclient.forge.clickgui.ClickGuiScreen;
 import net.wurstclient.forge.settings.CheckboxSetting;
 import net.wurstclient.forge.settings.SliderSetting;
 import net.wurstclient.forge.settings.SliderSetting.ValueDisplay;
+import net.wurstclient.forge.utils.TimerUtils;
 
 @Hack.DontSaveState
 public final class ClickGuiHack extends Hack
@@ -78,6 +80,7 @@ public final class ClickGuiHack extends Hack
     {
         mc.displayGuiScreen(new ClickGuiScreen(wurst.getGui()));
         setEnabled(false);
+        TimerUtils.reset();
     }
 
     public float getOpacity()

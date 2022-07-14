@@ -11,6 +11,8 @@ import java.util.Comparator;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Stream;
 
+import net.minecraft.init.SoundEvents;
+import net.wurstclient.forge.utils.*;
 import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -44,14 +46,16 @@ import net.wurstclient.forge.settings.CheckboxSetting;
 import net.wurstclient.forge.settings.EnumSetting;
 import net.wurstclient.forge.settings.SliderSetting;
 import net.wurstclient.forge.settings.SliderSetting.ValueDisplay;
-import net.wurstclient.forge.utils.EntityFakePlayer;
-import net.wurstclient.forge.utils.RenderUtils;
-import net.wurstclient.forge.utils.RotationUtils;
 
 public final class Killaura extends Hack
 {
 	private final SliderSetting range =
 			new SliderSetting("Range", 5, 1, 10, 0.05, ValueDisplay.DECIMAL);
+
+	private final SliderSetting maxDelay =
+			new SliderSetting("MaxDelay [MS]", 200, 50, 500, 50, ValueDisplay.DECIMAL);
+
+	public static double theDelay;
 
 	private final EnumSetting<Priority> priority = new EnumSetting<>("Priority",
 			"Determines which entity will be attacked first.\n"
@@ -104,6 +108,7 @@ public final class Killaura extends Hack
 		super("Killaura", "Automatically attacks entities around you.");
 		setCategory(Category.COMBAT);
 		addSetting(range);
+		addSetting(maxDelay);
 		addSetting(priority);
 		addSetting(filterPlayers);
 		addSetting(filterSleeping);
@@ -120,8 +125,15 @@ public final class Killaura extends Hack
 	}
 
 	@Override
+	public String getRenderName()
+	{
+		return getName() + " [" + range.getValueString() + "]";
+	}
+
+	@Override
 	protected void onEnable()
 	{
+		TimerUtils.reset();
 		MinecraftForge.EVENT_BUS.register(this);
 	}
 
@@ -135,6 +147,7 @@ public final class Killaura extends Hack
 	@SubscribeEvent
 	public void onUpdate(WUpdateEvent event)
 	{
+		theDelay = Math.random() * maxDelay.getValueF();
 		EntityPlayerSP player = event.getPlayer();
 		World world = WPlayer.getWorld(player);
 
@@ -206,10 +219,11 @@ public final class Killaura extends Hack
 		if(target == null)
 			return;
 
-		RotationUtils
-				.faceVectorPacket(target.getEntityBoundingBox().getCenter());
-		mc.playerController.attackEntity(player, target);
-		player.swingArm(EnumHand.MAIN_HAND);
+		if (TimerUtils.hasReached((long) theDelay)) {
+			mc.playerController.attackEntity(player, target);
+			player.swingArm(EnumHand.MAIN_HAND);
+			TimerUtils.reset();
+		}
 	}
 
 	@SubscribeEvent

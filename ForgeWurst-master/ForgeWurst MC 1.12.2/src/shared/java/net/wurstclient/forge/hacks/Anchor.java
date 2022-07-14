@@ -7,6 +7,7 @@
  */
 package net.wurstclient.forge.hacks;
 
+import net.minecraft.init.SoundEvents;
 import net.minecraft.util.Timer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -27,6 +28,12 @@ public final class Anchor extends Hack {
 		super("Anchor", "Fall over a hole faster and instantly.");
 		setCategory(Category.COMBAT);
 		addSetting(mode);
+	}
+
+	@Override
+	public String getRenderName()
+	{
+		return getName() + " [" + mode.getSelected().name() + "]";
 	}
 
 	@Override

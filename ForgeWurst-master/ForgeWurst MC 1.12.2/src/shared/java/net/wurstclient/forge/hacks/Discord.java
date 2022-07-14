@@ -7,6 +7,7 @@
  */
 package net.wurstclient.forge.hacks;
 
+import net.minecraft.init.SoundEvents;
 import net.wurstclient.club.minnced.discord.rpc.DiscordEventHandlers;
 import net.wurstclient.club.minnced.discord.rpc.DiscordRPC;
 import net.wurstclient.club.minnced.discord.rpc.DiscordRichPresence;

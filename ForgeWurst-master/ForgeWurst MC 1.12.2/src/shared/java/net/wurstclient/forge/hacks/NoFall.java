@@ -7,11 +7,13 @@
  */
 package net.wurstclient.forge.hacks;
 
+import net.minecraft.init.SoundEvents;
 import net.minecraft.network.play.client.CPacketPlayer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.wurstclient.fmlevents.WUpdateEvent;
 import net.wurstclient.forge.Category;
+import net.wurstclient.forge.ForgeWurst;
 import net.wurstclient.forge.Hack;
 import net.wurstclient.forge.settings.CheckboxSetting;
 import net.wurstclient.forge.settings.EnumSetting;
@@ -21,15 +23,16 @@ public final class NoFall extends Hack {
 	private final EnumSetting<Mode> mode =
 			new EnumSetting<>("Mode", Mode.values(), Mode.PACKET);
 
-	private final CheckboxSetting ncp =
-			new CheckboxSetting("NCP-Strict",
-					false);
-
 	public NoFall() {
 		super("NoFall", "Prevents falling damage/falling.");
 		setCategory(Category.PLAYER);
 		addSetting(mode);
-		addSetting(ncp);
+	}
+
+	@Override
+	public String getRenderName()
+	{
+		return getName() + " [" + mode.getSelected().name() + "]";
 	}
 
 	@Override
@@ -52,11 +55,10 @@ public final class NoFall extends Hack {
 
 		if (mode.getSelected().anti) {
 			if (mc.player.fallDistance > 4 && !mc.player.onGround) {
-				mc.player.motionY -= 200;
+				mc.player.motionY -= 500;
 			}
 		}
 	}
-
 	private enum Mode {
 		PACKET("Packet", true, false),
 		ANTI("Anti", false, true);

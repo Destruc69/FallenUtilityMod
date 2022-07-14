@@ -1,5 +1,6 @@
 package net.wurstclient.forge.hacks;
 
+import net.minecraft.init.SoundEvents;
 import net.minecraft.network.play.server.SPacketEntityVelocity;
 import net.minecraft.network.play.server.SPacketExplosion;
 import net.minecraftforge.common.MinecraftForge;

@@ -9,6 +9,7 @@ package net.wurstclient.forge.hacks;
 
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.entity.Entity;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -47,6 +48,12 @@ public final class Follow extends Hack {
 		setCategory(Category.MOVEMENT);
 		addSetting(range);
 		addSetting(dis);
+	}
+
+	@Override
+	public String getRenderName()
+	{
+		return getName() + " [" + range.getValueString() + "]";
 	}
 
 	@Override

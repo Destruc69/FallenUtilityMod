@@ -12,6 +12,7 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.CPacketPlayer;
 import net.minecraft.util.Timer;
@@ -55,6 +56,12 @@ public final class Jesus extends Hack {
 	protected void onEnable() {
 		MinecraftForge.EVENT_BUS.register(this);
 		tickTimer = 2;
+	}
+
+	@Override
+	public String getRenderName()
+	{
+		return getName() + " [" + mode.getSelected().name() + "]";
 	}
 
 	@Override

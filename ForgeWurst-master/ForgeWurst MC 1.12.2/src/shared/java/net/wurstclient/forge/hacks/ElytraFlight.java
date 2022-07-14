@@ -74,6 +74,12 @@ public final class ElytraFlight extends Hack {
 	}
 
 	@Override
+	public String getRenderName()
+	{
+		return getName() + " [" + mode.getSelected().name() + "]";
+	}
+
+	@Override
 	protected void onEnable() {
 		MinecraftForge.EVENT_BUS.register(this);
 	}

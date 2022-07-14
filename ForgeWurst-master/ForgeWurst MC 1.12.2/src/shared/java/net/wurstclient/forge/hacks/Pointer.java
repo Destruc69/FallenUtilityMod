@@ -8,6 +8,7 @@
 package net.wurstclient.forge.hacks;
 
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -90,7 +91,7 @@ public final class Pointer extends Hack {
 				for (BlockPos bbbb : blockPos) {
 					int radius = 100;
 					for (int y = (int) -radius; y <= radius; y++) {
-						GL11.glColor4f(1, 0, 0, 1F);
+						GL11.glColor4f(0, 1, 0, 1F);
 						GL11.glBegin(GL11.GL_QUADS);
 						RenderUtils.drawSolidBox(Objects.requireNonNull(BlockUtils.getBoundingBox(new BlockPos(bbbb.getX(), bbbb.getY() + y, bbbb.getZ()))));
 						GL11.glEnd();

@@ -7,6 +7,7 @@
  */
 package net.wurstclient.forge.hacks;
 
+import net.minecraft.init.SoundEvents;
 import net.minecraft.network.play.client.CPacketEntityAction;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -23,8 +24,12 @@ public final class AntiHunger extends Hack {
 
 	@Override
 	protected void onEnable() {
-		MinecraftForge.EVENT_BUS.register(this);
-		mc.player.connection.sendPacket(new CPacketEntityAction(mc.player, CPacketEntityAction.Action.STOP_SPRINTING));
+		try {
+			MinecraftForge.EVENT_BUS.register(this);
+			mc.player.connection.sendPacket(new CPacketEntityAction(mc.player, CPacketEntityAction.Action.STOP_SPRINTING));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override

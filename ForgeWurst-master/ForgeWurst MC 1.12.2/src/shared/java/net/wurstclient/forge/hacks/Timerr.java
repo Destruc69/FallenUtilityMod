@@ -9,6 +9,7 @@ package net.wurstclient.forge.hacks;
 
 import java.lang.reflect.Field;
 
+import net.minecraft.init.SoundEvents;
 import net.minecraft.util.Timer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;

@@ -7,6 +7,7 @@
  */
 package net.wurstclient.forge.hacks;
 
+import net.minecraft.init.SoundEvents;
 import net.minecraft.network.play.client.CPacketEntityAction;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -25,6 +26,12 @@ public final class AutoSneak extends Hack {
 		super("AutoSneak", "Makes you sneak automatically.");
 		setCategory(Category.MOVEMENT);
 		addSetting(mode);
+	}
+
+	@Override
+	public String getRenderName()
+	{
+		return getName() + " [" + mode.getSelected().name() + "]";
 	}
 
 	@Override

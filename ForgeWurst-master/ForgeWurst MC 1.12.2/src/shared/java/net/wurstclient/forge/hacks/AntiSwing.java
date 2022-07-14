@@ -7,6 +7,7 @@
  */
 package net.wurstclient.forge.hacks;
 
+import net.minecraft.init.SoundEvents;
 import net.minecraft.network.play.client.CPacketAnimation;
 import net.minecraft.network.play.server.SPacketAnimation;
 import net.minecraftforge.common.MinecraftForge;
@@ -30,7 +31,6 @@ public final class AntiSwing extends Hack {
 	@Override
 	protected void onDisable() {
 		MinecraftForge.EVENT_BUS.unregister(this);
-
 	}
 
 

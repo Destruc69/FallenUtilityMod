@@ -7,6 +7,7 @@
  */
 package net.wurstclient.forge.hacks;
 
+import net.minecraft.init.SoundEvents;
 import net.minecraft.network.play.server.SPacketBlockAction;
 import net.minecraft.network.play.server.SPacketBlockBreakAnim;
 import net.minecraftforge.common.MinecraftForge;
